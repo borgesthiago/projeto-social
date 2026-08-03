@@ -1,0 +1,26 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: projeto_social
+      MYSQL_USER: projeto_social
+      MYSQL_PASSWORD: projeto_social
+      MYSQL_ROOT_PASSWORD: root
+    ports: ["3306:3306"]
+    volumes: [mysql_data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  app:
+    build: .
+    working_dir: /app
+    volumes: [".:/app"]
+    environment:
+      DATABASE_URL: "mysql://projeto_social:projeto_social@mysql:3306/projeto_social?serverVersion=8.0.37&charset=utf8mb4"
+    ports: ["8000:8000"]
+    depends_on:
+      mysql: { condition: service_healthy }
+volumes:
+  mysql_data:

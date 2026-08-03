@@ -1,0 +1,7 @@
+{% extends 'base.html.twig' %}
+{% block title %}Matricular em {{ turma.nome }}{% endblock %}
+{% block body %}
+<div class="page-head"><div><a class="back-link" href="{{ path('app_crud_index',{resource:'turmas'}) }}">← Turmas</a><h1>Matricular aluno — {{ turma.nome }}</h1><p>{{ turma.modalidade.nome }} · faixa de {{ turma.idadeMinima }} a {{ turma.idadeMaxima }} anos · {{ enrolled }}/{{ turma.limiteAlunos }} vagas ocupadas</p></div></div>
+{% for error in errors %}<div class="alert">{{ error }}</div>{% endfor %}
+<form method="post" class="panel crud-form"><input type="hidden" name="_token" value="{{ csrf_token('enroll-'~turma.id) }}"><label>Aluno sem turma *<select name="aluno" required><option value="">Selecione...</option>{% for student in candidates %}<option value="{{ student.id }}" {{ app.request.request.get('aluno')==student.id?'selected':'' }}>{{ student.nome }} — {{ student.idade }} anos — {{ student.pontuacao }} pontos</option>{% endfor %}</select></label>{% if candidates is empty %}<div class="empty"><p>Não há alunos disponíveis para matrícula. Cadastre o aluno primeiro ou remova seu vínculo com outra turma.</p></div>{% endif %}<div class="form-actions"><a href="{{ path('app_crud_index',{resource:'turmas'}) }}">Cancelar</a><button type="submit" {{ candidates is empty or enrolled>=turma.limiteAlunos?'disabled':'' }}>Confirmar matrícula</button></div></form>
+{% endblock %}
