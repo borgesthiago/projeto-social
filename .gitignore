@@ -3,6 +3,7 @@
 /.env.local
 /.env.local.php
 /.env.*.local
+/.env.deploy.local
 /config/secrets/prod/prod.decrypt.private.php
 /public/bundles/
 /var/
@@ -16,3 +17,4 @@
 /.pdf-previews/
 /.pdf-tools/
 /public/uploads/projects/
+/deploy/certs/

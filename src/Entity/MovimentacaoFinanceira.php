@@ -11,6 +11,9 @@ class MovimentacaoFinanceira {
  #[ORM\Column(type:'date_immutable')] public \DateTimeImmutable $data;
  #[ORM\Column(length:80,nullable:true)] public ?string $categoria=null;
  #[ORM\Column(length:255,nullable:true)] public ?string $comprovante=null;
+ #[ORM\Column(length:255,nullable:true)] public ?string $comprovanteNome=null;
+ #[ORM\Column(length:100,nullable:true)] public ?string $comprovanteMime=null;
+ #[ORM\Column(nullable:true)] public ?int $comprovanteTamanho=null;
  #[ORM\Column] public bool $publica=true;
  public function __construct(){ $this->data=new \DateTimeImmutable(); }
 }

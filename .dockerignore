@@ -1,0 +1,11 @@
+.git
+.env.local
+.env.*.local
+.env.dev
+.env.test
+.env.deploy.local
+var
+vendor
+public/uploads
+pdf-previews
+pdf-tools
