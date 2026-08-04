@@ -27,10 +27,11 @@ function Read-DeployEnvironment([string]$Path) {
 $deploy = @{}
 if (-not $CommitOnly -and -not $PushOnly) {
     $deploy = Read-DeployEnvironment (Join-Path $projectRoot '.env.deploy.local')
-    foreach ($required in @('DEPLOY_HOST', 'DEPLOY_USER', 'DEPLOY_PATH')) {
+    foreach ($required in @('DEPLOY_HOST', 'DEPLOY_USER', 'DEPLOY_PATH', 'DEPLOY_REPOSITORY')) {
         if (-not $deploy[$required]) { throw "Configure $required em .env.deploy.local antes de iniciar o fluxo." }
     }
     if ($deploy.DEPLOY_PATH -notmatch '^[/A-Za-z0-9_.-]+$') { throw 'DEPLOY_PATH contém caracteres não permitidos.' }
+    if ($deploy.DEPLOY_REPOSITORY -notmatch '^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?$') { throw 'DEPLOY_REPOSITORY deve ser uma URL HTTPS válida do GitHub.' }
 }
 
 if (-not $PushOnly) {
@@ -54,22 +55,14 @@ $sshArgs = @('-p', $port, '-o', 'BatchMode=yes')
 if ($deploy.DEPLOY_IDENTITY_FILE) { $sshArgs += @('-i', $deploy.DEPLOY_IDENTITY_FILE) }
 $remote = "$($deploy.DEPLOY_USER)@$($deploy.DEPLOY_HOST)"
 $remotePath = $deploy.DEPLOY_PATH
+$repository = $deploy.DEPLOY_REPOSITORY
 $environmentFile = if ($deploy.DEPLOY_ENV_FILE) { $deploy.DEPLOY_ENV_FILE } else { '.env.production' }
 if ($environmentFile -notmatch '^\.[A-Za-z0-9_.-]+$') { throw 'DEPLOY_ENV_FILE contém caracteres não permitidos.' }
-$archive = Join-Path ([IO.Path]::GetTempPath()) "projeto-social-$PID.tar.gz"
-$remoteArchive = "/tmp/projeto-social-$PID.tar.gz"
-$remoteCommand = "mkdir -p '$remotePath' && tar -xzf '$remoteArchive' -C '$remotePath' && rm -f '$remoteArchive' && cd '$remotePath' && docker compose -f compose.prod.yaml --env-file '$environmentFile' up -d --build && docker compose -f compose.prod.yaml --env-file '$environmentFile' exec -T app php bin/console doctrine:migrations:migrate --no-interaction"
+$bootstrap = "if [ ! -d .git ]; then git init && git remote add origin '$repository' && git fetch origin '$branch' && git checkout --force -B '$branch' 'origin/$branch'; else git remote set-url origin '$repository'; fi"
+$remoteCommand = "mkdir -p '$remotePath' && cd '$remotePath' && $bootstrap && git pull --ff-only origin '$branch' && docker compose -f compose.prod.yaml --env-file '$environmentFile' up -d --build && docker compose -f compose.prod.yaml --env-file '$environmentFile' exec -T app php bin/console doctrine:migrations:migrate --no-interaction"
 if (-not $ForceDeploy) {
     $answer = Read-Host "Publicar $branch em $remote ($($deploy.DEPLOY_PATH))? [s/N]"
     if ($answer -notin @('s', 'S', 'sim', 'SIM')) { throw 'Deploy cancelado.' }
 }
-try {
-    Invoke-Step 'Gerando pacote do commit atual' { git archive --format=tar.gz --output=$archive HEAD }
-    $scpArgs = @('-P', $port, '-o', 'BatchMode=yes')
-    if ($deploy.DEPLOY_IDENTITY_FILE) { $scpArgs += @('-i', $deploy.DEPLOY_IDENTITY_FILE) }
-    Invoke-Step 'Enviando pacote ao servidor' { & scp @scpArgs $archive "${remote}:$remoteArchive" }
-    Invoke-Step 'Executando deploy remoto' { & ssh @sshArgs $remote $remoteCommand }
-} finally {
-    if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
-}
+Invoke-Step 'Acessando a VPS, atualizando o Git e publicando' { & ssh @sshArgs $remote $remoteCommand }
 Write-Host "`nCommit, push e deploy concluídos." -ForegroundColor Green
