@@ -1,0 +1,47 @@
+{% extends 'superadmin/base.html.twig' %}
+
+{% block title %}Meu perfil{% endblock %}
+
+{% block body %}
+<div class="page-head">
+    <div>
+        <h1>Meu perfil</h1>
+        <p>Atualize seus dados de acesso à administração da plataforma.</p>
+    </div>
+</div>
+
+{% for error in errors %}<div class="alert">{{ error }}</div>{% endfor %}
+
+<form method="post" class="panel crud-form" autocomplete="off">
+    <input type="hidden" name="_token" value="{{ csrf_token('superadmin-profile') }}">
+    <h3>Dados pessoais</h3>
+    <div class="form-grid">
+        <label>Nome completo *
+            <input name="nome" required minlength="3" value="{{ app.request.request.get('nome', profile_user.nome) }}" autocomplete="name">
+        </label>
+        <label>E-mail de acesso *
+            <input type="email" name="email" required value="{{ app.request.request.get('email', profile_user.email) }}" autocomplete="email">
+        </label>
+    </div>
+
+    <h3>Segurança</h3>
+    <p class="form-help">Para alterar o e-mail ou a senha, confirme primeiro sua senha atual. Deixe a nova senha vazia para mantê-la.</p>
+    <div class="form-grid">
+        <label>Senha atual
+            <input type="password" name="current_password" autocomplete="current-password">
+        </label>
+        <span></span>
+        <label>Nova senha
+            <input type="password" name="new_password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres">
+        </label>
+        <label>Confirmar nova senha
+            <input type="password" name="confirm_password" minlength="8" autocomplete="new-password">
+        </label>
+    </div>
+
+    <div class="form-actions">
+        <a href="{{ path('app_superadmin_index') }}">Cancelar</a>
+        <button>Salvar meu perfil</button>
+    </div>
+</form>
+{% endblock %}
