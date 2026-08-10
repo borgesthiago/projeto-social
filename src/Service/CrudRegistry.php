@@ -22,8 +22,10 @@ final class CrudRegistry
                 ['contatoWhatsapp', 'Contato por WhatsApp', 'boolean', false], ['contatoEmail', 'Contato por e-mail', 'boolean', false], ['contatoSms', 'Contato por SMS', 'boolean', false], ['contatoTelefone', 'Contato por telefone', 'boolean', false], ['recebeNotificacoes', 'Recebe notificações', 'boolean', false],
             ]),
             'professores' => $this->resource(Professor::class, 'Professores', 'Professor', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO'], [
-                ['nome', 'Nome', 'text', true], ['cpf', 'CPF', 'text', true], ['email', 'E-mail', 'email', false], ['especialidades', 'Especialidades', 'textarea', false],
-                ['formacao', 'Formação', 'textarea', false], ['ativo', 'Ativo', 'boolean', false],
+                ['nome', 'Nome completo', 'text', true], ['cpf', 'CPF', 'text', true], ['dataNascimento', 'Data de nascimento', 'date', false], ['telefone', 'Telefone / WhatsApp', 'text', true],
+                ['email', 'E-mail', 'email', true], ['registroProfissional', 'Registro profissional', 'text', false], ['tipoVinculo', 'Tipo de vínculo', 'choice', false, ['clt'=>'CLT','pj'=>'Pessoa jurídica','autonomo'=>'Autônomo','voluntario'=>'Voluntário','estagiario'=>'Estagiário','servidor'=>'Servidor público','outro'=>'Outro']],
+                ['cargaHorariaSemanal', 'Carga horária semanal', 'number', false], ['dataAdmissao', 'Data de admissão', 'date', false], ['endereco', 'Endereço completo', 'text', false],
+                ['formacao', 'Formação acadêmica', 'textarea', false], ['especialidades', 'Especialidades e áreas de atuação', 'textarea', false], ['observacoes', 'Observações', 'textarea', false], ['ativo', 'Professor ativo', 'boolean', false],
             ]),
             'modalidades' => $this->resource(Modalidade::class, 'Modalidades e Cursos', 'Modalidade', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO'], [
                 ['nome', 'Nome', 'text', true], ['descricao', 'Descrição', 'textarea', false], ['cargaHoraria', 'Carga horária', 'number', false], ['ativa', 'Ativa', 'boolean', false],
