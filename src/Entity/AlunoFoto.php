@@ -6,7 +6,7 @@ class AlunoFoto
 {
  use TenantOwnedTrait;
  #[ORM\Id,ORM\GeneratedValue,ORM\Column] public ?int $id=null;
- #[ORM\ManyToOne,ORM\JoinColumn(nullable:false,onDelete:'CASCADE')] public ?Aluno $aluno=null;
+ #[ORM\ManyToOne(inversedBy:'fotos'),ORM\JoinColumn(nullable:false,onDelete:'CASCADE')] public ?Aluno $aluno=null;
  #[ORM\Column(length:255)] public string $caminho='';
  #[ORM\Column(length:255)] public string $nomeOriginal='';
  #[ORM\Column] public int $tamanho=0;
