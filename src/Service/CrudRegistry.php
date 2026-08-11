@@ -1,7 +1,7 @@
 <?php
 namespace App\Service;
 
-use App\Entity\{Aluno, Aula, ConfiguracaoSistema, FilaEspera, Frequencia, Modalidade, MovimentacaoFinanceira, PrioridadeFila, Professor, Responsavel, Turma};
+use App\Entity\{AcaoSocial, Aluno, Aula, ConfiguracaoSistema, FilaEspera, Frequencia, Modalidade, MovimentacaoFinanceira, PrioridadeFila, Professor, Responsavel, Turma};
 
 final class CrudRegistry
 {
@@ -61,6 +61,13 @@ final class CrudRegistry
                 ['grupo', 'Grupo', 'choice', true, ['geral' => 'Geral', 'educacional' => 'Educacional', 'notificacao' => 'Notificação', 'evolution' => 'Evolution API', 'mensagem' => 'Mensagem']],
                 ['chave', 'Chave', 'text', true], ['valor', 'Valor', 'textarea', false],
                 ['tipo', 'Tipo', 'choice', true, ['texto' => 'Texto', 'numero' => 'Número', 'booleano' => 'Sim/Não', 'secreto' => 'Secreto']],
+            ]),
+            'acoes-sociais' => $this->resource(AcaoSocial::class, 'Ações e Eventos Sociais', 'Ação social', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO'], [
+                ['nome', 'Nome da ação ou evento', 'text', true], ['tipo', 'Tipo', 'choice', true, ['evento'=>'Evento','campanha'=>'Campanha','oficina'=>'Oficina','mutirao'=>'Mutirão','arrecadacao'=>'Arrecadação','atendimento'=>'Atendimento comunitário','outro'=>'Outro']],
+                ['dataInicio', 'Início', 'datetime-local', true], ['dataFim', 'Término', 'datetime-local', false], ['local', 'Local', 'text', true], ['responsavel', 'Responsável pela ação', 'text', false],
+                ['publicoAlvo', 'Público-alvo', 'textarea', false], ['capacidade', 'Capacidade de participantes', 'number', false], ['participantes', 'Participantes confirmados/atendidos', 'number', true],
+                ['status', 'Situação', 'choice', true, ['planejada'=>'Planejada','inscricoes'=>'Inscrições abertas','andamento'=>'Em andamento','concluida'=>'Concluída','cancelada'=>'Cancelada']], ['publica', 'Divulgar publicamente', 'boolean', false],
+                ['descricao', 'Descrição e objetivo', 'textarea', false], ['resultados', 'Resultados e impacto alcançado', 'textarea', false],
             ]),
         ];
     }
