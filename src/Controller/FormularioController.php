@@ -1,0 +1,35 @@
+<?php
+namespace App\Controller;
+use App\Entity\{AcaoSocial,Aula,Formulario,FormularioCampo,FormularioResposta,ProjetoSocial,User};
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\{Request,Response};
+use Symfony\Component\Routing\Attribute\Route;
+
+#[Route('/formularios')]
+final class FormularioController extends AbstractController
+{
+ public function __construct(private EntityManagerInterface $em){}
+ #[Route('',name:'app_forms_index',methods:['GET'])]
+ public function index():Response{$project=$this->project();$this->guard();$forms=$this->em->getRepository(Formulario::class)->findBy(['projeto'=>$project],['id'=>'DESC']);$counts=[];foreach($forms as $form)$counts[$form->id]=$this->em->getRepository(FormularioResposta::class)->count(['projeto'=>$project,'formulario'=>$form]);return $this->render('formulario/index.html.twig',['forms'=>$forms,'counts'=>$counts]);}
+ #[Route('/novo',name:'app_forms_new',methods:['GET','POST'])]
+ public function new(Request $request):Response{$this->guard();$form=new Formulario();$form->projeto=$this->project();if($request->isMethod('POST')){if(!$this->isCsrfTokenValid('form-new',(string)$request->request->get('_token')))throw $this->createAccessDeniedException();$errors=$this->fill($form,$request);if(!$errors){$this->em->persist($form);$this->em->flush();return $this->redirectToRoute('app_forms_builder',['id'=>$form->id]);}}else$errors=[];return $this->render('formulario/new.html.twig',['form'=>$form,'errors'=>$errors,...$this->relations()]);}
+ #[Route('/{id}/construtor',name:'app_forms_builder',requirements:['id'=>'\d+'],methods:['GET','POST'])]
+ public function builder(int $id,Request $request):Response
+ {
+  $this->guard();$form=$this->owned(Formulario::class,$id);$errors=[];if($request->isMethod('POST')){if(!$this->isCsrfTokenValid('form-builder-'.$id,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();if($request->request->get('operation')==='field'){$field=new FormularioCampo();$field->projeto=$this->project();$field->formulario=$form;$field->rotulo=trim((string)$request->request->get('rotulo'));$field->tipo=(string)$request->request->get('tipoCampo');$field->ajuda=trim((string)$request->request->get('ajuda'))?:null;$field->obrigatorio=$request->request->has('obrigatorio');$field->ordem=count($form->campos)+1;$field->opcoes=array_values(array_filter(array_map('trim',preg_split('/\R/',(string)$request->request->get('opcoes'))?:[])));if($field->rotulo==='')$errors[]='Informe o texto da pergunta.';if(!in_array($field->tipo,['texto','texto_longo','email','telefone','numero','data','selecao','radio','checkbox','nota'],true))$errors[]='Selecione um tipo de campo válido.';if(in_array($field->tipo,['selecao','radio','checkbox'],true)&&!$field->opcoes)$errors[]='Informe pelo menos uma opção.';if(!$errors){$this->em->persist($field);$this->em->flush();$this->addFlash('success','Pergunta adicionada.');return $this->redirectToRoute('app_forms_builder',['id'=>$id]);}}else{$errors=$this->fill($form,$request);if(!$errors){$this->em->flush();$this->addFlash('success','Formulário atualizado.');return $this->redirectToRoute('app_forms_builder',['id'=>$id]);}}}
+  return $this->render('formulario/builder.html.twig',['form'=>$form,'errors'=>$errors,...$this->relations()]);
+ }
+ #[Route('/{formId}/campo/{id}/excluir',name:'app_forms_field_delete',requirements:['formId'=>'\d+','id'=>'\d+'],methods:['POST'])]
+ public function deleteField(int $formId,int $id,Request $request):Response{$this->guard();$form=$this->owned(Formulario::class,$formId);$field=$this->owned(FormularioCampo::class,$id);if($field->formulario!==$form)throw $this->createNotFoundException();if(!$this->isCsrfTokenValid('field-delete-'.$id,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();$this->em->remove($field);$this->em->flush();return $this->redirectToRoute('app_forms_builder',['id'=>$formId]);}
+ #[Route('/{id}/respostas',name:'app_forms_answers',requirements:['id'=>'\d+'],methods:['GET'])]
+ public function answers(int $id):Response{$this->guard();$form=$this->owned(Formulario::class,$id);return $this->render('formulario/answers.html.twig',['form'=>$form,'answers'=>$this->em->getRepository(FormularioResposta::class)->findBy(['projeto'=>$this->project(),'formulario'=>$form],['enviadoEm'=>'DESC'])]);}
+ #[Route('/{id}/excluir',name:'app_forms_delete',requirements:['id'=>'\d+'],methods:['POST'])]
+ public function delete(int $id,Request $request):Response{$this->guard();$form=$this->owned(Formulario::class,$id);if(!$this->isCsrfTokenValid('form-delete-'.$id,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();$this->em->remove($form);$this->em->flush();return $this->redirectToRoute('app_forms_index');}
+ private function fill(Formulario $form,Request $request):array{$errors=[];$form->titulo=trim((string)$request->request->get('titulo'));$form->tipo=(string)$request->request->get('tipo');$form->descricao=trim((string)$request->request->get('descricao'))?:null;$form->status=(string)$request->request->get('status','rascunho');$form->mensagemConfirmacao=trim((string)$request->request->get('mensagemConfirmacao'))?:null;$form->acao=$this->optional(AcaoSocial::class,$request->request->getInt('acao'));$form->aula=$this->optional(Aula::class,$request->request->getInt('aula'));try{$form->abertura=$request->request->get('abertura')?new \DateTimeImmutable((string)$request->request->get('abertura')):null;$form->encerramento=$request->request->get('encerramento')?new \DateTimeImmutable((string)$request->request->get('encerramento')):null;}catch(\Throwable){$errors[]='Informe datas válidas.';}if($form->titulo==='')$errors[]='Informe o título.';if(!in_array($form->tipo,['inscricao','avaliacao_evento','avaliacao_aula','pesquisa'],true))$errors[]='Selecione um tipo válido.';if(!in_array($form->status,['rascunho','publicado','encerrado'],true))$errors[]='Selecione uma situação válida.';if($form->encerramento&&$form->abertura&&$form->encerramento<$form->abertura)$errors[]='O encerramento não pode ser anterior à abertura.';return $errors;}
+ private function relations():array{$project=$this->project();return ['actions'=>$this->em->getRepository(AcaoSocial::class)->findBy(['projeto'=>$project],['dataInicio'=>'DESC']),'lessons'=>$this->em->getRepository(Aula::class)->findBy(['projeto'=>$project],['dataHora'=>'DESC'])];}
+ private function guard():void{if(!$this->isGranted('ROLE_MASTER')&&!$this->isGranted('ROLE_ADMINISTRATIVO'))throw $this->createAccessDeniedException();}
+ private function project():ProjetoSocial{$user=$this->getUser();if(!$user instanceof User||!$user->getProjeto())throw $this->createAccessDeniedException();return $user->getProjeto();}
+ private function owned(string $class,int $id):object{$entity=$this->em->getRepository($class)->findOneBy(['id'=>$id,'projeto'=>$this->project()]);if(!$entity)throw $this->createNotFoundException();return $entity;}
+ private function optional(string $class,int $id):?object{return $id?$this->owned($class,$id):null;}
+}
