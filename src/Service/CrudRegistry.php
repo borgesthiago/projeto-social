@@ -1,7 +1,7 @@
 <?php
 namespace App\Service;
 
-use App\Entity\{AcaoSocial, Aluno, Aula, ConfiguracaoSistema, FilaEspera, Frequencia, Modalidade, MovimentacaoFinanceira, PrioridadeFila, Professor, Responsavel, Turma};
+use App\Entity\{AcaoProfissional, AcaoSocial, Aluno, Aula, ConfiguracaoSistema, FilaEspera, Frequencia, Modalidade, MovimentacaoFinanceira, PrestadorServico, PrioridadeFila, Professor, Responsavel, Turma};
 
 final class CrudRegistry
 {
@@ -55,12 +55,24 @@ final class CrudRegistry
             'financeiro' => $this->resource(MovimentacaoFinanceira::class, 'Financeiro', 'Movimentação', ['ROLE_MASTER', 'ROLE_FINANCEIRO'], [
                 ['tipo', 'Tipo', 'choice', true, ['receita' => 'Receita', 'despesa' => 'Despesa']], ['descricao', 'Descrição', 'text', true],
                 ['valor', 'Valor', 'number', true], ['data', 'Data', 'date', true], ['categoria', 'Categoria', 'text', false],
+                ['acao', 'Ação ou evento', 'relation', false, AcaoSocial::class, 'nome'], ['prestador', 'Prestador / profissional', 'relation', false, PrestadorServico::class, 'nome'],
+                ['numeroDocumento', 'Nº nota, recibo ou contrato', 'text', false], ['situacao', 'Situação', 'choice', true, ['previsto'=>'Previsto','pago'=>'Pago/recebido','cancelado'=>'Cancelado']],
                 ['comprovante', 'Comprovante (URL)', 'text', false], ['publica', 'Exibir na transparência', 'boolean', false],
             ]),
             'configuracoes' => $this->resource(ConfiguracaoSistema::class, 'Configurações', 'Configuração', ['ROLE_MASTER'], [
                 ['grupo', 'Grupo', 'choice', true, ['geral' => 'Geral', 'educacional' => 'Educacional', 'notificacao' => 'Notificação', 'evolution' => 'Evolution API', 'mensagem' => 'Mensagem']],
                 ['chave', 'Chave', 'text', true], ['valor', 'Valor', 'textarea', false],
                 ['tipo', 'Tipo', 'choice', true, ['texto' => 'Texto', 'numero' => 'Número', 'booleano' => 'Sim/Não', 'secreto' => 'Secreto']],
+            ]),
+            'prestadores' => $this->resource(PrestadorServico::class, 'Profissionais e Prestadores', 'Prestador', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO', 'ROLE_FINANCEIRO'], [
+                ['nome', 'Nome / Razão social', 'text', true], ['tipoPessoa', 'Tipo de pessoa', 'choice', true, ['fisica'=>'Pessoa física','juridica'=>'Pessoa jurídica']], ['documento', 'CPF / CNPJ', 'text', true],
+                ['especialidade', 'Profissão / especialidade', 'text', true], ['registroProfissional', 'Registro profissional', 'text', false], ['telefone', 'Telefone / WhatsApp', 'text', true], ['email', 'E-mail', 'email', false],
+                ['endereco', 'Endereço', 'text', false], ['dadosBancarios', 'Dados bancários / chave PIX', 'text', false], ['observacoes', 'Observações', 'textarea', false], ['ativo', 'Cadastro ativo', 'boolean', false],
+            ]),
+            'profissionais-acoes' => $this->resource(AcaoProfissional::class, 'Profissionais por Ação ou Evento', 'Vínculo profissional', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO', 'ROLE_FINANCEIRO'], [
+                ['acao', 'Ação ou evento', 'relation', true, AcaoSocial::class, 'nome'], ['prestador', 'Profissional / prestador', 'relation', true, PrestadorServico::class, 'nome'], ['funcao', 'Função na ação', 'text', true],
+                ['inicio', 'Início da atuação', 'datetime-local', false], ['fim', 'Término da atuação', 'datetime-local', false], ['valorContratado', 'Valor contratado (R$)', 'number', true],
+                ['situacao', 'Situação', 'choice', true, ['previsto'=>'Previsto','contratado'=>'Contratado','realizado'=>'Serviço realizado','pago'=>'Pago','cancelado'=>'Cancelado']], ['observacoes', 'Escopo e observações', 'textarea', false],
             ]),
             'acoes-sociais' => $this->resource(AcaoSocial::class, 'Ações e Eventos Sociais', 'Ação social', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO'], [
                 ['nome', 'Nome da ação ou evento', 'text', true], ['tipo', 'Tipo', 'choice', true, ['evento'=>'Evento','campanha'=>'Campanha','oficina'=>'Oficina','mutirao'=>'Mutirão','arrecadacao'=>'Arrecadação','atendimento'=>'Atendimento comunitário','outro'=>'Outro']],

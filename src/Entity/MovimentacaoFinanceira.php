@@ -10,6 +10,10 @@ class MovimentacaoFinanceira {
  #[ORM\Column(type:'decimal',precision:12,scale:2)] public string $valor='0.00';
  #[ORM\Column(type:'date_immutable')] public \DateTimeImmutable $data;
  #[ORM\Column(length:80,nullable:true)] public ?string $categoria=null;
+ #[ORM\ManyToOne] public ?PrestadorServico $prestador=null;
+ #[ORM\ManyToOne] public ?AcaoSocial $acao=null;
+ #[ORM\Column(length:80,nullable:true)] public ?string $numeroDocumento=null;
+ #[ORM\Column(length:20)] public string $situacao='pago';
  #[ORM\Column(length:255,nullable:true)] public ?string $comprovante=null;
  #[ORM\Column(length:255,nullable:true)] public ?string $comprovanteNome=null;
  #[ORM\Column(length:100,nullable:true)] public ?string $comprovanteMime=null;
