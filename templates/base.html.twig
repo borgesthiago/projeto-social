@@ -4,7 +4,7 @@
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width,initial-scale=1">
  <title>{% block title %}Projeto Social{% endblock %}</title>
- {% for stylesheet in ['app','activity','attendance','student-form','action-icons','classes','lessons','execution','photos','attendance-overview','waitlist','finance','reports','users'] %}<link rel="stylesheet" href="{{ asset('styles/'~stylesheet~'.css') }}?v=20260812-3">{% endfor %}
+ {% for stylesheet in ['app','activity','attendance','student-form','action-icons','classes','lessons','execution','photos','attendance-overview','waitlist','finance','reports','users','forms-enhanced','stock-enhanced'] %}<link rel="stylesheet" href="{{ asset('styles/'~stylesheet~'.css') }}?v=20260812-4">{% endfor %}
  {% if app.user and app.user.projeto %}<style>:root{--blue:{{ app.user.projeto.corPrimaria }};--secondary:{{ app.user.projeto.corSecundaria }};--button-text:{{ app.user.projeto.corTextoBotao }};--sidebar-bg:{{ app.user.projeto.corSidebar }}}</style>{% endif %}
 </head>
 <body>
