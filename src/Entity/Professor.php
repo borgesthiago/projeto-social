@@ -1,5 +1,6 @@
 <?php
 namespace App\Entity;
+use Doctrine\Common\Collections\{ArrayCollection,Collection};
 use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity, ORM\UniqueConstraint(columns:['projeto_id','cpf'])]
 class Professor {
@@ -20,5 +21,7 @@ class Professor {
  #[ORM\Column(type:'text',nullable:true)] public ?string $formacao=null;
  #[ORM\Column(type:'text',nullable:true)] public ?string $observacoes=null;
  #[ORM\ManyToOne] public ?User $usuario=null;
+ #[ORM\ManyToMany(targetEntity:Ods::class)] #[ORM\JoinTable(name:'professor_ods')] public Collection $ods;
  #[ORM\Column] public bool $ativo=true;
+ public function __construct(){$this->ods=new ArrayCollection();}
 }

@@ -16,13 +16,16 @@ class Aluno {
  #[ORM\ManyToMany(targetEntity:PrioridadeFila::class)]
  #[ORM\JoinTable(name:'aluno_criterio')]
  public Collection $criterios;
+ #[ORM\ManyToMany(targetEntity:Ods::class)]
+ #[ORM\JoinTable(name:'aluno_ods')]
+ public Collection $ods;
  #[ORM\OneToMany(mappedBy:'aluno',targetEntity:AlunoFoto::class)]
  #[ORM\OrderBy(['criadaEm'=>'DESC'])]
  public Collection $fotos;
  #[ORM\ManyToOne] public ?Responsavel $responsavel=null;
  #[ORM\ManyToOne] public ?Turma $turma=null;
  #[ORM\ManyToOne] public ?User $usuario=null;
- public function __construct(){ $this->dataNascimento=new \DateTimeImmutable('-10 years');$this->criterios=new ArrayCollection();$this->fotos=new ArrayCollection(); }
+ public function __construct(){ $this->dataNascimento=new \DateTimeImmutable('-10 years');$this->criterios=new ArrayCollection();$this->ods=new ArrayCollection();$this->fotos=new ArrayCollection(); }
  public function isMenor(): bool { return $this->dataNascimento->diff(new \DateTimeImmutable())->y < 18; }
  public function idade(): int { return $this->dataNascimento->diff(new \DateTimeImmutable('today'))->y; }
 }

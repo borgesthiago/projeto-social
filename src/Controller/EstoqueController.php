@@ -31,6 +31,11 @@ final class EstoqueController extends AbstractController
  {
   $this->guard();$kit=$this->owned(KitEstoque::class,$id);$errors=[];if($request->isMethod('POST')){if(!$this->isCsrfTokenValid('kit-component-'.$id,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();$item=$this->owned(ItemEstoque::class,$request->request->getInt('item'));$quantity=(float)$request->request->get('quantidade');$duplicate=$this->em->getRepository(KitComponente::class)->findOneBy(['projeto'=>$this->project(),'kit'=>$kit,'item'=>$item]);if($quantity<=0)$errors[]='Informe uma quantidade maior que zero.';if($duplicate)$errors[]='Este item já faz parte do kit.';if(!$errors){$component=new KitComponente();$component->projeto=$this->project();$component->kit=$kit;$component->item=$item;$component->quantidade=number_format($quantity,3,'.','');$this->em->persist($component);$this->em->flush();return $this->redirectToRoute('app_kit_builder',['id'=>$id]);}}return $this->render('estoque/builder.html.twig',['kit'=>$kit,'items'=>$this->em->getRepository(ItemEstoque::class)->findBy(['projeto'=>$this->project(),'ativo'=>true],['nome'=>'ASC']),'capacity'=>$this->capacity($kit),'errors'=>$errors]);
  }
+ #[Route('/kit/{kitId}/componente/{id}/excluir',name:'app_kit_component_delete',requirements:['kitId'=>'\d+','id'=>'\d+'],methods:['POST'])]
+ public function deleteComponent(int $kitId,int $id,Request $request):Response
+ {
+  $this->guard();$kit=$this->owned(KitEstoque::class,$kitId);$component=$this->owned(KitComponente::class,$id);if($component->kit!==$kit)throw $this->createNotFoundException();if(!$this->isCsrfTokenValid('kit-component-delete-'.$id,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();$this->em->remove($component);$this->em->flush();$this->addFlash('success','Componente removido do kit.');return $this->redirectToRoute('app_kit_builder',['id'=>$kitId]);
+ }
  #[Route('/distribuir',name:'app_kit_distribute',methods:['GET','POST'])]
  public function distribute(Request $request):Response
  {

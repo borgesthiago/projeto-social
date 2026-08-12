@@ -1,5 +1,6 @@
 <?php
 namespace App\Entity;
+use Doctrine\Common\Collections\{ArrayCollection,Collection};
 use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 class Turma {
@@ -13,6 +14,7 @@ class Turma {
  #[ORM\Column(length:120,nullable:true)] public ?string $horario=null;
  #[ORM\ManyToOne] public ?Professor $professor=null;
  #[ORM\ManyToOne,ORM\JoinColumn(nullable:false)] public ?Modalidade $modalidade=null;
+ #[ORM\ManyToMany(targetEntity:Ods::class)] #[ORM\JoinTable(name:'turma_ods')] public Collection $ods;
  #[ORM\Column] public bool $ativa=true;
- public function __construct(){ $this->anoLetivo=(int)date('Y'); }
+ public function __construct(){ $this->anoLetivo=(int)date('Y');$this->ods=new ArrayCollection(); }
 }

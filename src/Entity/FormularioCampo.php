@@ -11,6 +11,7 @@ class FormularioCampo
  #[ORM\Column(length:30)] public string $tipo='texto';
  #[ORM\Column(type:'text',nullable:true)] public ?string $ajuda=null;
  #[ORM\Column(type:'json')] public array $opcoes=[];
+ #[ORM\Column(nullable:true)] public ?int $tamanho=null;
  #[ORM\Column] public bool $obrigatorio=false;
  #[ORM\Column] public int $ordem=0;
 }

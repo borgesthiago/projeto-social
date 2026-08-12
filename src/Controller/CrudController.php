@@ -16,9 +16,10 @@ final class CrudController extends AbstractController
  #[Route('',name:'app_crud_index',methods:['GET'])]
  public function index(string $resource,Request $request):Response
  {
-  $cfg=$this->config($resource);$project=$this->project();$q=trim((string)$request->query->get('q'));$qb=$this->em->getRepository($cfg['class'])->createQueryBuilder('e')->andWhere('e.projeto = :project')->setParameter('project',$project)->orderBy('e.id','DESC');
+  $cfg=$this->config($resource);$project=$this->project();$q=trim((string)$request->query->get('q'));$odsId=$request->query->getInt('ods');$supportsOds=property_exists($cfg['class'],'ods');$qb=$this->em->getRepository($cfg['class'])->createQueryBuilder('e')->andWhere('e.projeto = :project')->setParameter('project',$project)->orderBy('e.id','DESC');
   if($q!==''&&$this->hasField($cfg,'nome'))$qb->andWhere('LOWER(e.nome) LIKE :q')->setParameter('q','%'.mb_strtolower($q).'%');
-  return $this->render('crud/index.html.twig',['config'=>$cfg,'resource'=>$resource,'items'=>$qb->getQuery()->getResult(),'q'=>$q]);
+  if($supportsOds&&$odsId){$goal=$this->em->getRepository(Ods::class)->findOneBy(['id'=>$odsId,'projeto'=>$project]);if($goal)$qb->join('e.ods','filterOds')->andWhere('filterOds = :filterOds')->setParameter('filterOds',$goal);}
+  return $this->render('crud/index.html.twig',['config'=>$cfg,'resource'=>$resource,'items'=>$qb->getQuery()->getResult(),'q'=>$q,'availableOds'=>$supportsOds?$this->em->getRepository(Ods::class)->findBy(['projeto'=>$project,'ativo'=>true],['numero'=>'ASC']):[],'selectedOds'=>$odsId]);
  }
 
  #[Route('/novo',name:'app_crud_new',methods:['GET','POST'])]
@@ -40,7 +41,7 @@ final class CrudController extends AbstractController
  private function save(Request $request,string $resource,array $cfg,object $entity,bool $new):Response
  {
   $relations=[];foreach($cfg['fields'] as $field)if($field[2]==='relation')$relations[$field[0]]=$this->em->getRepository($field[4])->findBy(['projeto'=>$this->project()],[$field[5]=>'ASC']);
-  $criteria=$entity instanceof Aluno?$this->em->getRepository(PrioridadeFila::class)->findBy(['projeto'=>$this->project(),'ativa'=>true],['nome'=>'ASC']):[];$supportsOds=$entity instanceof AcaoSocial||$entity instanceof Aula||$entity instanceof AcaoProfissional;$availableOds=$supportsOds?$this->em->getRepository(Ods::class)->findBy(['projeto'=>$this->project(),'ativo'=>true],['numero'=>'ASC']):[];$errors=[];$newGuardian=null;
+  $criteria=$entity instanceof Aluno?$this->em->getRepository(PrioridadeFila::class)->findBy(['projeto'=>$this->project(),'ativa'=>true],['nome'=>'ASC']):[];$supportsOds=property_exists($entity,'ods');$availableOds=$supportsOds?$this->em->getRepository(Ods::class)->findBy(['projeto'=>$this->project(),'ativo'=>true],['numero'=>'ASC']):[];$errors=[];$newGuardian=null;
   if($request->isMethod('POST')){
    if(!$this->isCsrfTokenValid('crud-'.$resource,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();
    foreach($cfg['fields'] as $field){[$name,$label,$type,$required]=$field;if($type==='readonly')continue;$raw=$request->request->all()[$name]??null;if($type==='boolean'){$entity->$name=$raw!==null;continue;}if($required&&($raw===null||trim((string)$raw)==='')){$errors[]="O campo {$label} é obrigatório.";continue;}if($raw===null||$raw===''){$entity->$name=null;continue;}try{$entity->$name=match($type){'date'=>new \DateTimeImmutable((string)$raw),'datetime-local'=>new \DateTimeImmutable((string)$raw),'number'=>in_array($name,['valor','rendaFamiliar','valorContratado'],true)?(string)$raw:(int)$raw,'relation'=>$this->owned($field[4],(int)$raw),'email'=>filter_var($raw,FILTER_VALIDATE_EMAIL)?(string)$raw:throw new \InvalidArgumentException('E-mail inválido.'),default=>(string)$raw};}catch(\Throwable $e){$errors[]="{$label}: {$e->getMessage()}";}}
