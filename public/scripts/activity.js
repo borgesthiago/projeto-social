@@ -1,4 +1,30 @@
 (() => {
+ const navigation = document.querySelector('.shell > aside nav');
+ if (navigation) {
+  const labels = navigation.textContent;
+  const isMaster = labels.includes('Usuários') || labels.includes('Relatórios');
+  const isAdministrative = labels.includes('Alunos') && labels.includes('Professores');
+  const isFinancial = labels.includes('Financeiro');
+  const items = [];
+  if (isMaster || isAdministrative) {
+   items.push(['▧', 'Formulários', '/formularios']);
+   items.push(['▦', 'Estoque e kits', '/estoque']);
+   items.push(['◎', 'ODS', '/gestao/ods']);
+  }
+  if (isMaster || isAdministrative || isFinancial) {
+   items.push(['♟', 'Profissionais e prestadores', '/gestao/prestadores']);
+   items.push(['⇄', 'Profissionais por ação', '/gestao/profissionais-acoes']);
+  }
+  const reference = [...navigation.querySelectorAll('a')].find(link => link.textContent.includes('Financeiro')) || navigation.lastElementChild;
+  items.forEach(([icon, label, href]) => {
+   if (navigation.querySelector(`a[href="${href}"]`)) return;
+   const link = document.createElement('a');
+   link.href = href;
+   link.innerHTML = `<b>${icon}</b>${label}`;
+   navigation.insertBefore(link, reference);
+  });
+ }
+
  let pending = 0;
  let timer;
  const overlay = document.createElement('div');
