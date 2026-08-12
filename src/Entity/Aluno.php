@@ -10,6 +10,7 @@ class Aluno {
  #[ORM\Column(type:'date_immutable')] public \DateTimeImmutable $dataNascimento;
  #[ORM\Column(length:20,nullable:true)] public ?string $cpf=null;
  #[ORM\Column(length:30,nullable:true)] public ?string $telefone=null;
+ #[ORM\Column(length:30,nullable:true)] public ?string $sexo=null;
  #[ORM\Column(length:20)] public string $status='ativo';
  #[ORM\Column] public int $pontuacao=0;
  #[ORM\ManyToMany(targetEntity:PrioridadeFila::class)]

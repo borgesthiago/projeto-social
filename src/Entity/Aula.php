@@ -1,5 +1,6 @@
 <?php
 namespace App\Entity;
+use Doctrine\Common\Collections\{ArrayCollection,Collection};
 use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 class Aula {
@@ -12,5 +13,6 @@ class Aula {
  #[ORM\Column(type:'text',nullable:true)] public ?string $materiais=null;
  #[ORM\Column(length:20)] public string $status='planejada';
  #[ORM\ManyToOne] public ?Turma $turma=null;
- public function __construct(){ $this->dataHora=new \DateTimeImmutable(); }
+ #[ORM\ManyToMany(targetEntity:Ods::class)] #[ORM\JoinTable(name:'aula_ods')] public Collection $ods;
+ public function __construct(){ $this->dataHora=new \DateTimeImmutable();$this->ods=new ArrayCollection(); }
 }

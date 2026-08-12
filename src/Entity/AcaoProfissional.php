@@ -1,5 +1,6 @@
 <?php
 namespace App\Entity;
+use Doctrine\Common\Collections\{ArrayCollection,Collection};
 use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity,ORM\UniqueConstraint(columns:['acao_id','prestador_id','funcao'])]
 class AcaoProfissional
@@ -14,4 +15,6 @@ class AcaoProfissional
  #[ORM\Column(type:'decimal',precision:12,scale:2)] public string $valorContratado='0.00';
  #[ORM\Column(length:20)] public string $situacao='previsto';
  #[ORM\Column(type:'text',nullable:true)] public ?string $observacoes=null;
+ #[ORM\ManyToMany(targetEntity:Ods::class)] #[ORM\JoinTable(name:'acao_profissional_ods')] public Collection $ods;
+ public function __construct(){$this->ods=new ArrayCollection();}
 }

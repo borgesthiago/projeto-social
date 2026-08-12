@@ -10,6 +10,7 @@ class Professor {
  #[ORM\Column(length:11,nullable:true)] public ?string $cpf=null;
  #[ORM\Column(length:30,nullable:true)] public ?string $telefone=null;
  #[ORM\Column(type:'date_immutable',nullable:true)] public ?\DateTimeImmutable $dataNascimento=null;
+ #[ORM\Column(length:30,nullable:true)] public ?string $sexo=null;
  #[ORM\Column(length:50,nullable:true)] public ?string $registroProfissional=null;
  #[ORM\Column(length:30,nullable:true)] public ?string $tipoVinculo=null;
  #[ORM\Column(nullable:true)] public ?int $cargaHorariaSemanal=null;

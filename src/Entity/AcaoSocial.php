@@ -1,5 +1,6 @@
 <?php
 namespace App\Entity;
+use Doctrine\Common\Collections\{ArrayCollection,Collection};
 use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 class AcaoSocial
@@ -19,5 +20,6 @@ class AcaoSocial
  #[ORM\Column(length:20)] public string $status='planejada';
  #[ORM\Column] public bool $publica=false;
  #[ORM\Column(type:'text',nullable:true)] public ?string $resultados=null;
- public function __construct(){$this->dataInicio=(new \DateTimeImmutable('+7 days'))->setTime(9,0);}
+ #[ORM\ManyToMany(targetEntity:Ods::class)] #[ORM\JoinTable(name:'acao_social_ods')] public Collection $ods;
+ public function __construct(){$this->dataInicio=(new \DateTimeImmutable('+7 days'))->setTime(9,0);$this->ods=new ArrayCollection();}
 }

@@ -1,7 +1,7 @@
 <?php
 namespace App\Controller;
 
-use App\Entity\{AcaoProfissional,AcaoSocial,Aluno,FilaEspera,PrestadorServico,PrioridadeFila,ProjetoSocial,Responsavel,Turma,User};
+use App\Entity\{AcaoProfissional,AcaoSocial,Aluno,Aula,FilaEspera,Ods,PrestadorServico,PrioridadeFila,ProjetoSocial,Responsavel,Turma,User};
 use App\Service\{BillingManager,CadastroQualification,CrudRegistry,DocumentoValidator};
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -40,11 +40,12 @@ final class CrudController extends AbstractController
  private function save(Request $request,string $resource,array $cfg,object $entity,bool $new):Response
  {
   $relations=[];foreach($cfg['fields'] as $field)if($field[2]==='relation')$relations[$field[0]]=$this->em->getRepository($field[4])->findBy(['projeto'=>$this->project()],[$field[5]=>'ASC']);
-  $criteria=$entity instanceof Aluno?$this->em->getRepository(PrioridadeFila::class)->findBy(['projeto'=>$this->project(),'ativa'=>true],['nome'=>'ASC']):[];$errors=[];$newGuardian=null;
+  $criteria=$entity instanceof Aluno?$this->em->getRepository(PrioridadeFila::class)->findBy(['projeto'=>$this->project(),'ativa'=>true],['nome'=>'ASC']):[];$supportsOds=$entity instanceof AcaoSocial||$entity instanceof Aula||$entity instanceof AcaoProfissional;$availableOds=$supportsOds?$this->em->getRepository(Ods::class)->findBy(['projeto'=>$this->project(),'ativo'=>true],['numero'=>'ASC']):[];$errors=[];$newGuardian=null;
   if($request->isMethod('POST')){
    if(!$this->isCsrfTokenValid('crud-'.$resource,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();
    foreach($cfg['fields'] as $field){[$name,$label,$type,$required]=$field;if($type==='readonly')continue;$raw=$request->request->all()[$name]??null;if($type==='boolean'){$entity->$name=$raw!==null;continue;}if($required&&($raw===null||trim((string)$raw)==='')){$errors[]="O campo {$label} é obrigatório.";continue;}if($raw===null||$raw===''){$entity->$name=null;continue;}try{$entity->$name=match($type){'date'=>new \DateTimeImmutable((string)$raw),'datetime-local'=>new \DateTimeImmutable((string)$raw),'number'=>in_array($name,['valor','rendaFamiliar','valorContratado'],true)?(string)$raw:(int)$raw,'relation'=>$this->owned($field[4],(int)$raw),'email'=>filter_var($raw,FILTER_VALIDATE_EMAIL)?(string)$raw:throw new \InvalidArgumentException('E-mail inválido.'),default=>(string)$raw};}catch(\Throwable $e){$errors[]="{$label}: {$e->getMessage()}";}}
    if(property_exists($entity,'cpf')){$entity->cpf=$this->documents->normalize($entity->cpf);if(!$this->documents->cpf($entity->cpf))$errors[]='Informe um CPF válido.';else{$duplicate=$this->em->getRepository($cfg['class'])->findOneBy(['projeto'=>$this->project(),'cpf'=>$entity->cpf]);if($duplicate&&$duplicate!==$entity)$errors[]='Este CPF já está cadastrado neste projeto.';}}
+   if($supportsOds){$entity->ods->clear();foreach($request->request->all('ods') as $odsId){$goal=$this->em->getRepository(Ods::class)->findOneBy(['id'=>(int)$odsId,'projeto'=>$this->project(),'ativo'=>true]);if($goal)$entity->ods->add($goal);}}
    if($entity instanceof AcaoSocial){if($entity->dataFim&&$entity->dataFim<$entity->dataInicio)$errors[]='O término da ação não pode ser anterior ao início.';if($entity->capacidade!==null&&$entity->capacidade<1)$errors[]='A capacidade deve ser maior que zero.';if($entity->participantes<0)$errors[]='O número de participantes não pode ser negativo.';if($entity->capacidade!==null&&$entity->participantes>$entity->capacidade)$errors[]='O número de participantes não pode superar a capacidade.';}
    if($entity instanceof PrestadorServico){$entity->documento=$this->documents->normalize($entity->documento);$valid=$entity->tipoPessoa==='fisica'?$this->documents->cpf($entity->documento):$this->documents->cnpj($entity->documento);if(!$valid)$errors[]='Informe um CPF ou CNPJ válido de acordo com o tipo de pessoa.';else{$duplicate=$this->em->getRepository(PrestadorServico::class)->findOneBy(['projeto'=>$this->project(),'documento'=>$entity->documento]);if($duplicate&&$duplicate!==$entity)$errors[]='Este CPF ou CNPJ já está cadastrado.';}}
    if($entity instanceof AcaoProfissional){if((float)$entity->valorContratado<0)$errors[]='O valor contratado não pode ser negativo.';if($entity->fim&&$entity->inicio&&$entity->fim<$entity->inicio)$errors[]='O término da atuação não pode ser anterior ao início.';}
@@ -55,7 +56,7 @@ final class CrudController extends AbstractController
    if(!$errors){if($newGuardian)$this->em->persist($newGuardian);$this->em->persist($entity);if($entity instanceof PrioridadeFila)$this->recalculateStudentScores();$this->em->flush();$this->addFlash('success',$cfg['singular'].($new?' criado(a).':' atualizado(a).'));return $this->resourceRedirect($resource);}
   }
   $selectedCriteria=$request->isMethod('POST')?array_map('intval',$request->request->all('criterios')):($entity instanceof Aluno?$entity->criterios->map(fn(PrioridadeFila $c)=>$c->id)->toArray():[]);
-  return $this->render('crud/form.html.twig',['config'=>$cfg,'resource'=>$resource,'entity'=>$entity,'relations'=>$relations,'errors'=>$errors,'is_new'=>$new,'criteria'=>$criteria,'selectedCriteria'=>$selectedCriteria,'guardianData'=>$request->request->all('novoResponsavel'),'qualification'=>$entity instanceof Aluno?$this->qualification->evaluate($entity):($entity instanceof Responsavel?$this->qualification->evaluateGuardian($entity):null)]);
+  return $this->render('crud/form.html.twig',['config'=>$cfg,'resource'=>$resource,'entity'=>$entity,'relations'=>$relations,'errors'=>$errors,'is_new'=>$new,'criteria'=>$criteria,'selectedCriteria'=>$selectedCriteria,'availableOds'=>$availableOds,'guardianData'=>$request->request->all('novoResponsavel'),'qualification'=>$entity instanceof Aluno?$this->qualification->evaluate($entity):($entity instanceof Responsavel?$this->qualification->evaluateGuardian($entity):null)]);
  }
 
  private function newGuardian(Request $request,array &$errors):?Responsavel

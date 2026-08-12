@@ -1,7 +1,7 @@
 <?php
 namespace App\Service;
 
-use App\Entity\{AcaoProfissional, AcaoSocial, Aluno, Aula, ConfiguracaoSistema, FilaEspera, Frequencia, Modalidade, MovimentacaoFinanceira, PrestadorServico, PrioridadeFila, Professor, Responsavel, Turma};
+use App\Entity\{AcaoProfissional, AcaoSocial, Aluno, Aula, ConfiguracaoSistema, FilaEspera, Frequencia, Modalidade, MovimentacaoFinanceira, Ods, PrestadorServico, PrioridadeFila, Professor, Responsavel, Turma};
 
 final class CrudRegistry
 {
@@ -10,7 +10,7 @@ final class CrudRegistry
         return [
             'alunos' => $this->resource(Aluno::class, 'Alunos', 'Aluno', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO'], [
                 ['nome', 'Nome', 'text', true], ['dataNascimento', 'Data de nascimento', 'date', true],
-                ['cpf', 'CPF', 'text', true], ['telefone', 'Telefone', 'text', false],
+                ['cpf', 'CPF', 'text', true], ['telefone', 'Telefone', 'text', false], ['sexo', 'Sexo / gênero', 'choice', false, ['feminino'=>'Feminino','masculino'=>'Masculino','nao_binario'=>'Não binário','outro'=>'Outro','nao_informado'=>'Prefere não informar']],
                 ['status', 'Status', 'choice', true, ['ativo' => 'Ativo', 'inativo' => 'Inativo', 'fila' => 'Fila de espera', 'egresso' => 'Egresso']],
                 ['pontuacao', 'Pontuação calculada', 'readonly', false],
                 ['responsavel', 'Responsável', 'relation', false, Responsavel::class, 'nome'], ['turma', 'Turma', 'relation', false, Turma::class, 'nome'],
@@ -22,7 +22,7 @@ final class CrudRegistry
                 ['contatoWhatsapp', 'Contato por WhatsApp', 'boolean', false], ['contatoEmail', 'Contato por e-mail', 'boolean', false], ['contatoSms', 'Contato por SMS', 'boolean', false], ['contatoTelefone', 'Contato por telefone', 'boolean', false], ['recebeNotificacoes', 'Recebe notificações', 'boolean', false],
             ]),
             'professores' => $this->resource(Professor::class, 'Professores', 'Professor', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO'], [
-                ['nome', 'Nome completo', 'text', true], ['cpf', 'CPF', 'text', true], ['dataNascimento', 'Data de nascimento', 'date', false], ['telefone', 'Telefone / WhatsApp', 'text', true],
+                ['nome', 'Nome completo', 'text', true], ['cpf', 'CPF', 'text', true], ['dataNascimento', 'Data de nascimento', 'date', false], ['sexo', 'Sexo / gênero', 'choice', false, ['feminino'=>'Feminino','masculino'=>'Masculino','nao_binario'=>'Não binário','outro'=>'Outro','nao_informado'=>'Prefere não informar']], ['telefone', 'Telefone / WhatsApp', 'text', true],
                 ['email', 'E-mail', 'email', true], ['registroProfissional', 'Registro profissional', 'text', false], ['tipoVinculo', 'Tipo de vínculo', 'choice', false, ['clt'=>'CLT','pj'=>'Pessoa jurídica','autonomo'=>'Autônomo','voluntario'=>'Voluntário','estagiario'=>'Estagiário','servidor'=>'Servidor público','outro'=>'Outro']],
                 ['cargaHorariaSemanal', 'Carga horária semanal', 'number', false], ['dataAdmissao', 'Data de admissão', 'date', false], ['endereco', 'Endereço completo', 'text', false],
                 ['formacao', 'Formação acadêmica', 'textarea', false], ['especialidades', 'Especialidades e áreas de atuação', 'textarea', false], ['observacoes', 'Observações', 'textarea', false], ['ativo', 'Professor ativo', 'boolean', false],
@@ -73,6 +73,9 @@ final class CrudRegistry
                 ['acao', 'Ação ou evento', 'relation', true, AcaoSocial::class, 'nome'], ['prestador', 'Profissional / prestador', 'relation', true, PrestadorServico::class, 'nome'], ['funcao', 'Função na ação', 'text', true],
                 ['inicio', 'Início da atuação', 'datetime-local', false], ['fim', 'Término da atuação', 'datetime-local', false], ['valorContratado', 'Valor contratado (R$)', 'number', true],
                 ['situacao', 'Situação', 'choice', true, ['previsto'=>'Previsto','contratado'=>'Contratado','realizado'=>'Serviço realizado','pago'=>'Pago','cancelado'=>'Cancelado']], ['observacoes', 'Escopo e observações', 'textarea', false],
+            ]),
+            'ods' => $this->resource(Ods::class, 'Objetivos de Desenvolvimento Sustentável', 'ODS', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO'], [
+                ['numero', 'Número', 'number', true], ['nome', 'Objetivo', 'text', true], ['descricao', 'Descrição e metas relacionadas', 'textarea', false], ['cor', 'Cor de identificação', 'text', true], ['ativo', 'ODS ativo', 'boolean', false],
             ]),
             'acoes-sociais' => $this->resource(AcaoSocial::class, 'Ações e Eventos Sociais', 'Ação social', ['ROLE_MASTER', 'ROLE_ADMINISTRATIVO'], [
                 ['nome', 'Nome da ação ou evento', 'text', true], ['tipo', 'Tipo', 'choice', true, ['evento'=>'Evento','campanha'=>'Campanha','oficina'=>'Oficina','mutirao'=>'Mutirão','arrecadacao'=>'Arrecadação','atendimento'=>'Atendimento comunitário','outro'=>'Outro']],
